@@ -1,12 +1,10 @@
 # Minify client side assets (JavaScript)
 FROM node:latest AS build-js
 
-RUN npm install gulp gulp-cli -g
-
 WORKDIR /build
 COPY . .
-RUN npm install --only=dev
-RUN gulp
+RUN npm ci --audit=false --fund=false
+RUN npm run build
 
 
 # Build Golang binary
