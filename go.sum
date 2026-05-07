@@ -1,3 +1,5 @@
+filippo.io/csrf v0.2.1 h1:MdV/y9xOECwJko48lPkH9NaYNpZ6kYfaNlgnZk4k6Uo=
+filippo.io/csrf v0.2.1/go.mod h1:eVfdeENlqr/ErpNx4E5I6a11I1aP0WL/PPkzKD1d960=
 filippo.io/edwards25519 v1.2.0 h1:crnVqOiS4jqYleHd9vaKZ+HKtHfllngJIiOpNpoJsjo=
 filippo.io/edwards25519 v1.2.0/go.mod h1:xzAOLCNug/yB62zG1bQ8uziwrIqIuxhctzJT18Q77mc=
 github.com/NYTimes/gziphandler v1.1.1 h1:ZUDjpQae29j0ryrS0u/B8HZfJBtBQHjqw2rQ2cqUQ3I=
@@ -37,8 +39,6 @@ github.com/gophish/gomail v0.0.0-20200818021916-1f6d0dfd512e h1:URNpXdOxXAfuZ8ws
 github.com/gophish/gomail v0.0.0-20200818021916-1f6d0dfd512e/go.mod h1:JGlHttcLdDp3F4g8bPHqqQnUUDuB3poB4zLXozQ0xCY=
 github.com/gorilla/context v1.1.2 h1:WRkNAv2uoa03QNIc1A6u4O7DAGMUVoopZhkiXWA2V1o=
 github.com/gorilla/context v1.1.2/go.mod h1:KDPwT9i/MeWHiLl90fuTgrt4/wPcv75vFAZLaOOcbxM=
-github.com/gorilla/csrf v1.7.3 h1:BHWt6FTLZAb2HtWT5KDBf6qgpZzvtbp9QWDRKZMXJC0=
-github.com/gorilla/csrf v1.7.3/go.mod h1:F1Fj3KG23WYHE6gozCmBAezKookxbIvUJT+121wTuLk=
 github.com/gorilla/handlers v1.5.2 h1:cLTUSsNkgcwhgRqvCNmdbRWG0A3N4F+M2nWKdScwyEE=
 github.com/gorilla/handlers v1.5.2/go.mod h1:dX+xVpaxdSw+q0Qek8SSsl3dfMk3jNddUkMzo0GtH0w=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
