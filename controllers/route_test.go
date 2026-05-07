@@ -43,8 +43,11 @@ func attemptLogin(t *testing.T, ctx *testContext, client *http.Client, username,
 		t.Fatalf("error creating new /login request: %v", err)
 	}
 
-	req.Header.Set("Cookie", resp.Header.Get("Set-Cookie"))
+	for _, cookie := range resp.Cookies() {
+		req.AddCookie(cookie)
+	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", fmt.Sprintf("%s/login", ctx.adminServer.URL))
 
 	resp, err = client.Do(req)
 	if err != nil {

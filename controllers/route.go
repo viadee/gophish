@@ -154,9 +154,16 @@ func (as *AdminServer) registerRoutes() {
 	}
 	csrfHandler := csrf.Protect(csrfKey,
 		csrf.FieldName("csrf_token"),
+		csrf.Path("/"),
 		csrf.Secure(as.config.UseTLS),
 		csrf.TrustedOrigins(as.config.TrustedOrigins))
-	adminHandler := csrfHandler(router)
+	protectedHandler := csrfHandler(router)
+	adminHandler := protectedHandler
+	if !as.config.UseTLS {
+		adminHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			protectedHandler.ServeHTTP(w, csrf.PlaintextHTTPRequest(r))
+		})
+	}
 	adminHandler = mid.Use(adminHandler.ServeHTTP, mid.CSRFExceptions, mid.GetContext, mid.ApplySecurityHeaders)
 
 	// Setup GZIP compression
