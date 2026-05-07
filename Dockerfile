@@ -1,5 +1,5 @@
 # Minify client side assets (JavaScript)
-FROM node:latest AS build-js
+FROM node:25-trixie-slim AS build-js
 
 WORKDIR /build
 COPY . .
@@ -8,7 +8,7 @@ RUN npm run build
 
 
 # Build Golang binary
-FROM golang:1.26.2-bookworm AS build-golang
+FROM golang:1.26-trixie AS build-golang
 
 WORKDIR /go/src/github.com/gophish/gophish
 COPY . .
@@ -17,7 +17,7 @@ RUN go build -v
 
 
 # Runtime container
-FROM debian:stable-slim
+FROM debian:trixie-slim
 
 RUN useradd -m -d /opt/gophish -s /bin/bash app
 
@@ -30,8 +30,7 @@ WORKDIR /opt/gophish
 COPY --from=build-golang /go/src/github.com/gophish/gophish/ ./
 COPY --from=build-js /build/static/js/dist/ ./static/js/dist/
 COPY --from=build-js /build/static/css/dist/ ./static/css/dist/
-COPY --from=build-golang /go/src/github.com/gophish/gophish/config.json ./
-RUN chown app. config.json
+COPY --from=build-golang --chown=app:app /go/src/github.com/gophish/gophish/config.json ./
 
 RUN setcap 'cap_net_bind_service=+ep' /opt/gophish/gophish
 
