@@ -7,18 +7,18 @@ import (
 	"time"
 
 	log "github.com/gophish/gophish/logger"
-	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 // Group contains the fields needed for a user -> group mapping
 // Groups contain 1..* Targets
 type Group struct {
-	Id           int64     `json:"id"`
+	Id           int64     `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
 	UserId       int64     `json:"-"`
 	Name         string    `json:"name"`
 	ModifiedDate time.Time `json:"modified_date"`
-	Targets      []Target  `json:"targets" sql:"-"`
+	Targets      []Target  `json:"targets" gorm:"-"`
 }
 
 // GroupSummaries is a struct representing the overview of Groups.
@@ -46,7 +46,7 @@ type GroupTarget struct {
 // Target contains the fields needed for individual targets specified by the user
 // Groups contain 1..* Targets, but 1 Target may belong to 1..* Groups
 type Target struct {
-	Id int64 `json:"-"`
+	Id int64 `json:"-" gorm:"column:id;primaryKey;autoIncrement"`
 	BaseRecipient
 }
 
@@ -146,7 +146,7 @@ func GetGroupSummaries(uid int64) (GroupSummaries, error) {
 // GetGroup returns the group, if it exists, specified by the given id and user_id.
 func GetGroup(id int64, uid int64) (Group, error) {
 	g := Group{}
-	err := db.Where("user_id=? and id=?", uid, id).Find(&g).Error
+	err := db.Where("user_id=? and id=?", uid, id).First(&g).Error
 	if err != nil {
 		log.Error(err)
 		return g, err
@@ -178,7 +178,7 @@ func GetGroupSummary(id int64, uid int64) (GroupSummary, error) {
 // GetGroupByName returns the group, if it exists, specified by the given name and user_id.
 func GetGroupByName(n string, uid int64) (Group, error) {
 	g := Group{}
-	err := db.Where("user_id=? and name=?", uid, n).Find(&g).Error
+	err := db.Where("user_id=? and name=?", uid, n).First(&g).Error
 	if err != nil {
 		log.Error(err)
 		return g, err
@@ -326,7 +326,7 @@ func insertTargetIntoGroup(tx *gorm.DB, t Target, gid int64) error {
 		}).Error(err)
 		return err
 	}
-	err = tx.Save(&GroupTarget{GroupId: gid, TargetId: t.Id}).Error
+	err = tx.Create(&GroupTarget{GroupId: gid, TargetId: t.Id}).Error
 	if err != nil {
 		log.Error(err)
 		return err

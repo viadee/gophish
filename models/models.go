@@ -12,13 +12,16 @@ import (
 
 	"bitbucket.org/liamstask/goose/lib/goose"
 
-	mysql "github.com/go-sql-driver/mysql"
+	mysqlDriver "github.com/go-sql-driver/mysql"
 	"github.com/gophish/gophish/auth"
 	"github.com/gophish/gophish/config"
 
 	log "github.com/gophish/gophish/logger"
-	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3" // Blank import needed to import sqlite3
+	gormmysql "gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 var db *gorm.DB
@@ -98,6 +101,19 @@ func chooseDBDriver(name, openStr string) goose.DBDriver {
 	return d
 }
 
+func openDB(name, path string) (*gorm.DB, error) {
+	config := &gorm.Config{
+		Logger: gormlogger.Default.LogMode(gormlogger.Silent),
+	}
+
+	switch name {
+	case "mysql":
+		return gorm.Open(gormmysql.Open(path), config)
+	default:
+		return gorm.Open(sqlite.Open(path), config)
+	}
+}
+
 func createTemporaryPassword(u *User) error {
 	var temporaryPassword string
 	if envPassword := os.Getenv(InitialAdminPassword); envPassword != "" {
@@ -160,7 +176,7 @@ func Setup(c *config.Config) error {
 				log.Error("Failed to append PEM.")
 				return err
 			}
-			mysql.RegisterTLSConfig("ssl_ca", &tls.Config{
+			mysqlDriver.RegisterTLSConfig("ssl_ca", &tls.Config{
 				RootCAs: rootCertPool,
 			})
 			// Default database is sqlite3, which supports no tls, as connection
@@ -172,7 +188,7 @@ func Setup(c *config.Config) error {
 	// Open our database connection
 	i := 0
 	for {
-		db, err = gorm.Open(conf.DBName, conf.DBPath)
+		db, err = openDB(conf.DBName, conf.DBPath)
 		if err == nil {
 			break
 		}
@@ -184,15 +200,18 @@ func Setup(c *config.Config) error {
 		log.Warn("waiting for database to be up...")
 		time.Sleep(5 * time.Second)
 	}
-	db.LogMode(false)
-	db.SetLogger(log.Logger)
-	db.DB().SetMaxOpenConns(1)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	sqlDB.SetMaxOpenConns(1)
 	// Migrate up to the latest version
-	err = goose.RunMigrationsOnDb(migrateConf, migrateConf.MigrationsDir, latest, db.DB())
+	err = goose.RunMigrationsOnDb(migrateConf, migrateConf.MigrationsDir, latest, sqlDB)
 	if err != nil {
 		log.Error(err)
 		return err

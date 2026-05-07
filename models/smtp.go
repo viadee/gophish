@@ -14,7 +14,7 @@ import (
 	"github.com/gophish/gophish/dialer"
 	log "github.com/gophish/gophish/logger"
 	"github.com/gophish/gophish/mailer"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // Dialer is a wrapper around a standard gomail.Dialer in order
@@ -32,7 +32,7 @@ func (d *Dialer) Dial() (mailer.Sender, error) {
 
 // SMTP contains the attributes needed to handle the sending of campaign emails
 type SMTP struct {
-	Id               int64     `json:"id" gorm:"column:id; primary_key:yes"`
+	Id               int64     `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
 	UserId           int64     `json:"-" gorm:"column:user_id"`
 	Interface        string    `json:"interface_type" gorm:"column:interface_type"`
 	Name             string    `json:"name"`
@@ -41,14 +41,14 @@ type SMTP struct {
 	Password         string    `json:"password,omitempty"`
 	FromAddress      string    `json:"from_address"`
 	IgnoreCertErrors bool      `json:"ignore_cert_errors"`
-	Headers          []Header  `json:"headers"`
+	Headers          []Header  `json:"headers" gorm:"foreignKey:SMTPId"`
 	ModifiedDate     time.Time `json:"modified_date"`
 }
 
 // Header contains the fields and methods for a sending profile to have
 // custom headers
 type Header struct {
-	Id     int64  `json:"-"`
+	Id     int64  `json:"-" gorm:"column:id;primaryKey;autoIncrement"`
 	SMTPId int64  `json:"-"`
 	Key    string `json:"key"`
 	Value  string `json:"value"`
@@ -159,7 +159,7 @@ func GetSMTPs(uid int64) ([]SMTP, error) {
 // GetSMTP returns the SMTP, if it exists, specified by the given id and user_id.
 func GetSMTP(id int64, uid int64) (SMTP, error) {
 	s := SMTP{}
-	err := db.Where("user_id=? and id=?", uid, id).Find(&s).Error
+	err := db.Where("user_id=? and id=?", uid, id).First(&s).Error
 	if err != nil {
 		log.Error(err)
 		return s, err
@@ -195,14 +195,14 @@ func PostSMTP(s *SMTP) error {
 		return err
 	}
 	// Insert into the DB
-	err = db.Save(s).Error
+	err = db.Omit("Headers").Select("*").Create(s).Error
 	if err != nil {
 		log.Error(err)
 	}
 	// Save custom headers
 	for i := range s.Headers {
 		s.Headers[i].SMTPId = s.Id
-		err := db.Save(&s.Headers[i]).Error
+		err := db.Create(&s.Headers[i]).Error
 		if err != nil {
 			log.Error(err)
 			return err
@@ -219,7 +219,7 @@ func PutSMTP(s *SMTP) error {
 		log.Error(err)
 		return err
 	}
-	err = db.Where("id=?", s.Id).Save(s).Error
+	err = db.Model(&SMTP{}).Omit("Headers").Where("id=?", s.Id).Select("*").Updates(s).Error
 	if err != nil {
 		log.Error(err)
 	}
@@ -232,7 +232,7 @@ func PutSMTP(s *SMTP) error {
 	// Save custom headers
 	for i := range s.Headers {
 		s.Headers[i].SMTPId = s.Id
-		err := db.Save(&s.Headers[i]).Error
+		err := db.Create(&s.Headers[i]).Error
 		if err != nil {
 			log.Error(err)
 			return err

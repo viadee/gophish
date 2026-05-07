@@ -5,6 +5,7 @@ import (
 
 	"github.com/gophish/gophish/config"
 	"gopkg.in/check.v1"
+	"gorm.io/gorm"
 )
 
 // Hook up gocheck into the "go test" runner.
@@ -32,14 +33,22 @@ func (s *ModelsSuite) SetUpSuite(c *check.C) {
 func (s *ModelsSuite) TearDownTest(c *check.C) {
 	// Clear database tables between each test. If new tables are
 	// used in this test suite they will need to be cleaned up here.
-	db.Delete(Group{})
-	db.Delete(Target{})
-	db.Delete(GroupTarget{})
-	db.Delete(SMTP{})
-	db.Delete(Page{})
-	db.Delete(Result{})
-	db.Delete(MailLog{})
-	db.Delete(Campaign{})
+	cleanupDB := db.Session(&gorm.Session{AllowGlobalUpdate: true})
+	cleanupDB.Delete(Group{})
+	cleanupDB.Delete(Target{})
+	cleanupDB.Delete(GroupTarget{})
+	cleanupDB.Delete(SMTP{})
+	cleanupDB.Delete(Header{})
+	cleanupDB.Delete(Page{})
+	cleanupDB.Delete(Template{})
+	cleanupDB.Delete(Attachment{})
+	cleanupDB.Delete(Result{})
+	cleanupDB.Delete(Event{})
+	cleanupDB.Delete(MailLog{})
+	cleanupDB.Delete(Campaign{})
+	cleanupDB.Delete(EmailRequest{})
+	cleanupDB.Delete(Webhook{})
+	cleanupDB.Delete(IMAP{})
 
 	// Reset users table to default state.
 	db.Not("id", 1).Delete(User{})
@@ -117,21 +126,33 @@ func setupBenchmark(b *testing.B) {
 }
 
 func tearDownBenchmark(b *testing.B) {
-	err := db.Close()
+	sqlDB, err := db.DB()
+	if err != nil {
+		b.Fatalf("error getting database handle: %v", err)
+	}
+	err = sqlDB.Close()
 	if err != nil {
 		b.Fatalf("error closing database: %v", err)
 	}
 }
 
 func resetBenchmark(b *testing.B) {
-	db.Delete(Group{})
-	db.Delete(Target{})
-	db.Delete(GroupTarget{})
-	db.Delete(SMTP{})
-	db.Delete(Page{})
-	db.Delete(Result{})
-	db.Delete(MailLog{})
-	db.Delete(Campaign{})
+	cleanupDB := db.Session(&gorm.Session{AllowGlobalUpdate: true})
+	cleanupDB.Delete(Group{})
+	cleanupDB.Delete(Target{})
+	cleanupDB.Delete(GroupTarget{})
+	cleanupDB.Delete(SMTP{})
+	cleanupDB.Delete(Header{})
+	cleanupDB.Delete(Page{})
+	cleanupDB.Delete(Template{})
+	cleanupDB.Delete(Attachment{})
+	cleanupDB.Delete(Result{})
+	cleanupDB.Delete(Event{})
+	cleanupDB.Delete(MailLog{})
+	cleanupDB.Delete(Campaign{})
+	cleanupDB.Delete(EmailRequest{})
+	cleanupDB.Delete(Webhook{})
+	cleanupDB.Delete(IMAP{})
 
 	// Reset users table to default state.
 	db.Not("id", 1).Delete(User{})

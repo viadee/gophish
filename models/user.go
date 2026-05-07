@@ -14,7 +14,7 @@ var ErrModifyingOnlyAdmin = errors.New("Cannot remove the only administrator")
 
 // User represents the user model for gophish.
 type User struct {
-	Id                     int64     `json:"id"`
+	Id                     int64     `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
 	Username               string    `json:"username" sql:"not null;unique"`
 	Hash                   string    `json:"-"`
 	ApiKey                 string    `json:"api_key" sql:"not null;unique"`
@@ -70,7 +70,7 @@ func EnsureEnoughAdmins() error {
 	if err != nil {
 		return err
 	}
-	var adminCount int
+	var adminCount int64
 	err = db.Model(&User{}).Where("role_id=?", role.ID).Count(&adminCount).Error
 	if err != nil {
 		return err

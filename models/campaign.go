@@ -7,13 +7,13 @@ import (
 
 	log "github.com/gophish/gophish/logger"
 	"github.com/gophish/gophish/webhook"
-	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 // Campaign is a struct representing a created campaign
 type Campaign struct {
-	Id            int64     `json:"id"`
+	Id            int64     `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
 	UserId        int64     `json:"-"`
 	Name          string    `json:"name" sql:"not null"`
 	CreatedDate   time.Time `json:"created_date"`
@@ -26,7 +26,7 @@ type Campaign struct {
 	Page          Page      `json:"page"`
 	Status        string    `json:"status"`
 	Results       []Result  `json:"results,omitempty"`
-	Groups        []Group   `json:"groups,omitempty"`
+	Groups        []Group   `json:"groups,omitempty" gorm:"-"`
 	Events        []Event   `json:"timeline,omitempty"`
 	SMTPId        int64     `json:"-"`
 	SMTP          SMTP      `json:"smtp"`
@@ -74,7 +74,7 @@ type CampaignStats struct {
 // Event contains the fields for an event
 // that occurs during the campaign
 type Event struct {
-	Id         int64     `json:"-"`
+	Id         int64     `json:"-" gorm:"column:id;primaryKey;autoIncrement"`
 	CampaignId int64     `json:"campaign_id"`
 	Email      string    `json:"email"`
 	Time       time.Time `json:"time"`
@@ -181,12 +181,12 @@ func AddEvent(e *Event, campaignID int64) error {
 // an error is returned. Otherwise, the attribute name is set to [Deleted],
 // indicating the user deleted the attribute (template, smtp, etc.)
 func (c *Campaign) getDetails() error {
-	err := db.Model(c).Related(&c.Results).Error
+	err := db.Model(c).Association("Results").Find(&c.Results)
 	if err != nil {
 		log.Warnf("%s: results not found for campaign", err)
 		return err
 	}
-	err = db.Model(c).Related(&c.Events).Error
+	err = db.Model(c).Association("Events").Find(&c.Events)
 	if err != nil {
 		log.Warnf("%s: events not found for campaign", err)
 		return err
@@ -304,7 +304,7 @@ func getCampaignStats(cid int64) (CampaignStats, error) {
 // GetCampaigns returns the campaigns owned by the given user.
 func GetCampaigns(uid int64) ([]Campaign, error) {
 	cs := []Campaign{}
-	err := db.Model(&User{Id: uid}).Related(&cs).Error
+	err := db.Where("user_id = ?", uid).Find(&cs).Error
 	if err != nil {
 		log.Error(err)
 	}

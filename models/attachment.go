@@ -15,7 +15,7 @@ import (
 // Attachment contains the fields and methods for
 // an email attachment
 type Attachment struct {
-	Id          int64  `json:"-"`
+	Id          int64  `json:"-" gorm:"column:id;primaryKey;autoIncrement"`
 	TemplateId  int64  `json:"-"`
 	Content     string `json:"content"`
 	Type        string `json:"type"`

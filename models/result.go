@@ -8,8 +8,8 @@ import (
 	"time"
 
 	log "github.com/gophish/gophish/logger"
-	"github.com/jinzhu/gorm"
 	"github.com/oschwald/maxminddb-golang"
+	"gorm.io/gorm"
 )
 
 type mmCity struct {
@@ -24,7 +24,7 @@ type mmGeoPoint struct {
 // Result contains the fields for a result object,
 // which is a representation of a target in a campaign.
 type Result struct {
-	Id           int64     `json:"-"`
+	Id           int64     `json:"-" gorm:"column:id;primaryKey;autoIncrement"`
 	CampaignId   int64     `json:"-"`
 	UserId       int64     `json:"-"`
 	RId          string    `json:"id"`
