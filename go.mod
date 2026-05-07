@@ -2,6 +2,8 @@ module github.com/gophish/gophish
 
 go 1.26
 
+ignore ./node_modules
+
 require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/PuerkitoBio/goquery v1.12.0
