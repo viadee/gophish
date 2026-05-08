@@ -1,6 +1,6 @@
 module github.com/gophish/gophish
 
-go 1.26
+go 1.26.3
 
 ignore ./node_modules
 
