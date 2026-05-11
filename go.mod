@@ -32,8 +32,10 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
+	github.com/denisenkom/go-mssqldb v0.12.3 // indirect
 	github.com/emersion/go-sasl v0.0.0-20191210011802-430746ea8b9b // indirect
 	github.com/emersion/go-textwrapper v0.0.0-20160606182133-d0e65e56babe // indirect
+	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/kylelemons/go-gypsy v0.0.0-20160905020020-08cad365cd28 // indirect
