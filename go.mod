@@ -6,8 +6,8 @@ require (
 	bitbucket.org/liamstask/goose v0.0.0-20150115234039-8488cc47d90c
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/PuerkitoBio/goquery v1.12.0
-	github.com/emersion/go-imap v1.0.4
-	github.com/emersion/go-message v0.12.0
+	github.com/emersion/go-imap v1.2.1
+	github.com/emersion/go-message v0.15.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gophish/gomail v0.0.0-20200818021916-1f6d0dfd512e
 	github.com/gorilla/context v1.1.1
@@ -33,8 +33,8 @@ require (
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/denisenkom/go-mssqldb v0.12.3 // indirect
-	github.com/emersion/go-sasl v0.0.0-20191210011802-430746ea8b9b // indirect
-	github.com/emersion/go-textwrapper v0.0.0-20160606182133-d0e65e56babe // indirect
+	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21 // indirect
+	github.com/emersion/go-textwrapper v0.0.0-20200911093747-65d896831594 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
