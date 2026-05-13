@@ -6,12 +6,12 @@ import (
 	"time"
 
 	log "github.com/gophish/gophish/logger"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // Template models hold the attributes for an email template to be sent to targets
 type Template struct {
-	Id             int64        `json:"id" gorm:"column:id; primary_key:yes"`
+	Id             int64        `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
 	UserId         int64        `json:"-" gorm:"column:user_id"`
 	Name           string       `json:"name"`
 	EnvelopeSender string       `json:"envelope_sender"`
@@ -19,7 +19,7 @@ type Template struct {
 	Text           string       `json:"text"`
 	HTML           string       `json:"html" gorm:"column:html"`
 	ModifiedDate   time.Time    `json:"modified_date"`
-	Attachments    []Attachment `json:"attachments"`
+	Attachments    []Attachment `json:"attachments" gorm:"foreignKey:TemplateId"`
 }
 
 // ErrTemplateNameNotSpecified is thrown when a template name is not specified
@@ -126,7 +126,7 @@ func PostTemplate(t *Template) error {
 	if err := t.Validate(); err != nil {
 		return err
 	}
-	err := db.Save(t).Error
+	err := db.Omit("Attachments").Select("*").Create(t).Error
 	if err != nil {
 		log.Error(err)
 		return err
@@ -135,7 +135,7 @@ func PostTemplate(t *Template) error {
 	// Save every attachment
 	for i := range t.Attachments {
 		t.Attachments[i].TemplateId = t.Id
-		err := db.Save(&t.Attachments[i]).Error
+		err := db.Create(&t.Attachments[i]).Error
 		if err != nil {
 			log.Error(err)
 			return err
@@ -161,7 +161,7 @@ func PutTemplate(t *Template) error {
 	}
 	for i := range t.Attachments {
 		t.Attachments[i].TemplateId = t.Id
-		err := db.Save(&t.Attachments[i]).Error
+		err := db.Create(&t.Attachments[i]).Error
 		if err != nil {
 			log.Error(err)
 			return err
@@ -169,7 +169,7 @@ func PutTemplate(t *Template) error {
 	}
 
 	// Save final template
-	err = db.Where("id=?", t.Id).Save(t).Error
+	err = db.Model(&Template{}).Omit("Attachments").Where("id=?", t.Id).Select("*").Updates(t).Error
 	if err != nil {
 		log.Error(err)
 		return err

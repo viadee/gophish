@@ -17,6 +17,7 @@ import (
 	"github.com/gophish/gophish/config"
 	log "github.com/gophish/gophish/logger"
 	"github.com/gophish/gophish/mailer"
+	"gorm.io/gorm"
 )
 
 // MaxSendAttempts set to 8 since we exponentially backoff after each failed send
@@ -33,7 +34,7 @@ var embeddedFileExtensions = []string{".jpg", ".jpeg", ".png", ".gif"}
 // MailLog is a struct that holds information about an email that is to be
 // sent out.
 type MailLog struct {
-	Id          int64     `json:"-"`
+	Id          int64     `json:"-" gorm:"column:id;primaryKey;autoIncrement"`
 	UserId      int64     `json:"-"`
 	CampaignId  int64     `json:"campaign_id"`
 	RId         string    `json:"id"`
@@ -41,7 +42,7 @@ type MailLog struct {
 	SendAttempt int       `json:"send_attempt"`
 	Processing  bool      `json:"-"`
 
-	cachedCampaign *Campaign
+	cachedCampaign *Campaign `gorm:"-"`
 }
 
 // GenerateMailLog creates a new maillog for the given campaign and
@@ -300,7 +301,7 @@ func LockMailLogs(ms []*MailLog, lock bool) error {
 // in the database. This is intended to be called when Gophish is started
 // so that any previously locked maillogs can resume processing.
 func UnlockAllMailLogs() error {
-	return db.Model(&MailLog{}).Update("processing", false).Error
+	return db.Session(&gorm.Session{AllowGlobalUpdate: true}).Model(&MailLog{}).Update("processing", false).Error
 }
 
 var maxBigInt = big.NewInt(math.MaxInt64)

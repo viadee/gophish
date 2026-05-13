@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
+	pathutil "path/filepath"
 
 	log "github.com/gophish/gophish/logger"
 )
@@ -60,8 +61,8 @@ func LoadConfig(filepath string) (*Config, error) {
 	if config.Logging == nil {
 		config.Logging = &log.Config{}
 	}
-	// Choosing the migrations directory based on the database used.
-	config.MigrationsPath = config.MigrationsPath + config.DBName
+	// Choose the migrations directory based on the database used.
+	config.MigrationsPath = pathutil.Join(config.MigrationsPath+config.DBName, "migrations")
 	// Explicitly set the TestFlag to false to prevent config.json overrides
 	config.TestFlag = false
 	return config, nil

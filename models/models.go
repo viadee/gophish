@@ -10,15 +10,17 @@ import (
 	"os"
 	"time"
 
-	"bitbucket.org/liamstask/goose/lib/goose"
-
-	mysql "github.com/go-sql-driver/mysql"
+	mysqlDriver "github.com/go-sql-driver/mysql"
 	"github.com/gophish/gophish/auth"
 	"github.com/gophish/gophish/config"
 
 	log "github.com/gophish/gophish/logger"
-	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3" // Blank import needed to import sqlite3
+	"github.com/pressly/goose/v3"
+	gormmysql "gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 var db *gorm.DB
@@ -81,21 +83,28 @@ func generateSecureKey() string {
 	return fmt.Sprintf("%x", k)
 }
 
-func chooseDBDriver(name, openStr string) goose.DBDriver {
-	d := goose.DBDriver{Name: name, OpenStr: openStr}
+func openDB(name, path string) (*gorm.DB, error) {
+	config := &gorm.Config{
+		Logger: gormlogger.Default.LogMode(gormlogger.Silent),
+	}
 
 	switch name {
 	case "mysql":
-		d.Import = "github.com/go-sql-driver/mysql"
-		d.Dialect = &goose.MySqlDialect{}
-
-	// Default database is sqlite3
+		return gorm.Open(gormmysql.Open(path), config)
 	default:
-		d.Import = "github.com/mattn/go-sqlite3"
-		d.Dialect = &goose.Sqlite3Dialect{}
+		return gorm.Open(sqlite.Open(path), config)
 	}
+}
 
-	return d
+func configureMigrations(name string) error {
+	goose.SetLogger(goose.NopLogger())
+
+	switch name {
+	case "mysql":
+		return goose.SetDialect("mysql")
+	default:
+		return goose.SetDialect("sqlite3")
+	}
 }
 
 func createTemporaryPassword(u *User) error {
@@ -133,18 +142,13 @@ func createTemporaryPassword(u *User) error {
 func Setup(c *config.Config) error {
 	// Setup the package-scoped config
 	conf = c
-	// Setup the goose configuration
-	migrateConf := &goose.DBConf{
-		MigrationsDir: conf.MigrationsPath,
-		Env:           "production",
-		Driver:        chooseDBDriver(conf.DBName, conf.DBPath),
-	}
-	// Get the latest possible migration
-	latest, err := goose.GetMostRecentDBVersion(migrateConf.MigrationsDir)
-	if err != nil {
+
+	if err := configureMigrations(conf.DBName); err != nil {
 		log.Error(err)
 		return err
 	}
+
+	var err error
 
 	// Register certificates for tls encrypted db connections
 	if conf.DBSSLCaPath != "" {
@@ -160,7 +164,7 @@ func Setup(c *config.Config) error {
 				log.Error("Failed to append PEM.")
 				return err
 			}
-			mysql.RegisterTLSConfig("ssl_ca", &tls.Config{
+			mysqlDriver.RegisterTLSConfig("ssl_ca", &tls.Config{
 				RootCAs: rootCertPool,
 			})
 			// Default database is sqlite3, which supports no tls, as connection
@@ -172,7 +176,7 @@ func Setup(c *config.Config) error {
 	// Open our database connection
 	i := 0
 	for {
-		db, err = gorm.Open(conf.DBName, conf.DBPath)
+		db, err = openDB(conf.DBName, conf.DBPath)
 		if err == nil {
 			break
 		}
@@ -184,16 +188,17 @@ func Setup(c *config.Config) error {
 		log.Warn("waiting for database to be up...")
 		time.Sleep(5 * time.Second)
 	}
-	db.LogMode(false)
-	db.SetLogger(log.Logger)
-	db.DB().SetMaxOpenConns(1)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	// Migrate up to the latest version
-	err = goose.RunMigrationsOnDb(migrateConf, migrateConf.MigrationsDir, latest, db.DB())
+	sqlDB, err := db.DB()
 	if err != nil {
+		log.Error(err)
+		return err
+	}
+	sqlDB.SetMaxOpenConns(1)
+	if err = goose.Up(sqlDB, conf.MigrationsPath); err != nil {
 		log.Error(err)
 		return err
 	}

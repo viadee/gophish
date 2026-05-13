@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"filippo.io/csrf/gorilla"
 	"github.com/NYTimes/gziphandler"
 	"github.com/gophish/gophish/auth"
 	"github.com/gophish/gophish/config"
@@ -21,7 +22,6 @@ import (
 	"github.com/gophish/gophish/models"
 	"github.com/gophish/gophish/util"
 	"github.com/gophish/gophish/worker"
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -154,9 +154,16 @@ func (as *AdminServer) registerRoutes() {
 	}
 	csrfHandler := csrf.Protect(csrfKey,
 		csrf.FieldName("csrf_token"),
+		csrf.Path("/"),
 		csrf.Secure(as.config.UseTLS),
 		csrf.TrustedOrigins(as.config.TrustedOrigins))
-	adminHandler := csrfHandler(router)
+	protectedHandler := csrfHandler(router)
+	adminHandler := protectedHandler
+	if !as.config.UseTLS {
+		adminHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			protectedHandler.ServeHTTP(w, csrf.PlaintextHTTPRequest(r))
+		})
+	}
 	adminHandler = mid.Use(adminHandler.ServeHTTP, mid.CSRFExceptions, mid.GetContext, mid.ApplySecurityHeaders)
 
 	// Setup GZIP compression

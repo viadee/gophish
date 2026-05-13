@@ -43,8 +43,11 @@ func attemptLogin(t *testing.T, ctx *testContext, client *http.Client, username,
 		t.Fatalf("error creating new /login request: %v", err)
 	}
 
-	req.Header.Set("Cookie", resp.Header.Get("Set-Cookie"))
+	for _, cookie := range resp.Cookies() {
+		req.AddCookie(cookie)
+	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", fmt.Sprintf("%s/login", ctx.adminServer.URL))
 
 	resp, err = client.Do(req)
 	if err != nil {
@@ -56,11 +59,22 @@ func attemptLogin(t *testing.T, ctx *testContext, client *http.Client, username,
 func TestLoginCSRF(t *testing.T) {
 	ctx := setupTest(t)
 	defer tearDown(t, ctx)
-	resp, err := http.PostForm(fmt.Sprintf("%s/login", ctx.adminServer.URL),
-		url.Values{
-			"username": {"admin"},
-			"password": {"gophish"},
-		})
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/login", ctx.adminServer.URL), strings.NewReader(url.Values{
+		"username": {"admin"},
+		"password": {"gophish"},
+	}.Encode()))
+	if err != nil {
+		t.Fatalf("error creating /login request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", "https://attacker.example")
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	resp, err := client.Do(req)
 
 	if err != nil {
 		t.Fatalf("error requesting the /login endpoint: %v", err)
