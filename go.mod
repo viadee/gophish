@@ -41,7 +41,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/kylelemons/go-gypsy v1.0.0 // indirect
-	github.com/lib/pq v1.1.1 // indirect
+	github.com/lib/pq v1.12.3 // indirect
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/net v0.54.0 // indirect
